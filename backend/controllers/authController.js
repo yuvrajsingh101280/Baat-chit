@@ -165,6 +165,26 @@ export const onboard = async (req, res) => {
             return res.status(404).json({ success: false, message: "User not found" })
 
         }
+
+
+        // updatin the stream user also
+
+        try {
+            await upsertStreamUser({
+
+
+
+                id: updatedUser._id.toString(),
+                name: updatedUser.fullName,
+                image: updatedUser.profilePic || ""
+
+
+            })
+
+        } catch (error) {
+            console.log("Stream Error", error)
+        }
+
         return res.status(200).json({ success: true, message: "User updated", user: updatedUser })
     } catch (error) {
         console.log("Onboading error", error)
