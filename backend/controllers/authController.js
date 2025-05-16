@@ -2,6 +2,7 @@ import User from "../model/User.js";
 import jwt from "jsonwebtoken"
 import bcrypt from "bcryptjs";
 import { generateTokenAndSetCookie } from "../utils/generateTokenAndSetCookie.js";
+import { upsertStreamUser } from "../lib/stream.js";
 export const signup = async (req, res) => {
 
     const { email, fullName, password } = req.body
@@ -45,7 +46,22 @@ export const signup = async (req, res) => {
         const randomAvatar = `https://avatar.iran.liara.run/public/${index}.png`
         //creating the new user   
         const newUser = await User.create({ email, fullName, password: hashedPassword, profilePic: randomAvatar })
+        // creating stream user
 
+        try {
+            await upsertStreamUser({
+                id: newUser._id.toString(),
+                name: newUser.fullName,
+
+                image: newUser.profilePic || ""
+
+            })
+            console.log("stream user created")
+
+        } catch (error) {
+            console.log("Error creating stream user ", error)
+
+        }
         //   generate token and set cookie
         generateTokenAndSetCookie(newUser._id, res)
         return res.status(201).json({ success: true, message: "User has been created", user: newUser })
@@ -60,7 +76,42 @@ export const signup = async (req, res) => {
 export const login = async (req, res) => {
 
 
+    try {
 
+        const { email, password } = req.body
+        if (!email || !password) {
+
+
+            return res.status(400).json({ success: false, message: "All Fields are required" })
+
+        }
+
+        const user = await User.findOne({ email })
+        if (!user) {
+
+            return res.status(400).json({ success: false, message: "User not found" })
+
+
+        }
+        const isPasswordCorrect = await bcrypt.compare(password, user.password)
+        if (!isPasswordCorrect) {
+
+
+            return res.status(400).json({ success: false, mesasge: "Invalid password" })
+
+        }
+        generateTokenAndSetCookie(user._id, res)
+
+
+        return res.status(200).json({ success: true, message: "User logged in" })
+
+
+
+    } catch (error) {
+        console.log("Error in logging", error)
+        return res.status(500).json({ success: false, message: "Internal Server Error" })
+
+    }
 
 
 
@@ -69,6 +120,7 @@ export const login = async (req, res) => {
 };
 export const logout = async (req, res) => {
 
-
+    res.clearCookie("jwt")
+    return res.status(200).json({ success: true, message: "Logged out successfully" })
 
 };
