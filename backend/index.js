@@ -2,6 +2,7 @@ import express from "express"
 import dotenv from "dotenv"
 import connectToDB from "./database/db.js"
 import authRoutes from "./routes/authRoutes.js"
+import userRoutes from "./routes/userRoutes.js"
 import cookieParser from "cookie-parser"
 import cors from "cors"
 // env config
@@ -24,6 +25,7 @@ app.get("/", (req, res) => {
 
 })
 app.use("/api/auth", authRoutes)
+app.use("/api/auth", userRoutes)
 // server listening
 app.listen(port, () => {
 
